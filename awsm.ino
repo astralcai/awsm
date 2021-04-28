@@ -215,15 +215,10 @@ void loop()
         uploading = true;
     }
 
-    if (uploading && !uploadReady)
-    {
-        uploadReady = sendMessage(DEVICE_ID + " new " + readFile);
-    }
-
-    if (uploading && uploadReady)
+    if (uploading)
     {
         file = SD.open(readFile);
-        text = "" + DEVICE_ID;
+        text = String(DEVICE_ID) + " new " + readFile
         while (file.available())
         {
             text += " " + file.readStringUntil('\n');
