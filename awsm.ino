@@ -17,8 +17,8 @@
 #define TEMPERATURE_SENSOR_PIN 28
 #define PRESSURE_SENSOR_PIN A2
 #define TURBIDITY_SENSOR_PIN A5
-#define FORWARD_VALVE_PIN 23
-#define REVERSE_VALVE_PIN 24
+#define FORWARD_VALVE_PIN 22
+#define REVERSE_VALVE_PIN 23
 #define FORWARD_PUMP_PIN 25
 #define REVERSE_PUMP_PIN 26
 #define FLOW_SENSOR_PIN 2
@@ -89,6 +89,7 @@ bool event = false;
 // initialize data
 long start_time;
 long event_timer;
+long curr_time;
 float temperature;
 float turbidity;
 float pressure;
@@ -146,11 +147,13 @@ void setup()
 void loop()
 {
 
-    if (event && millis() % SAMPLE_INTERVAL_EVENT < SAMPLE_TIME_UNCERTAINTY)
+    curr_time = millis() - start_time;
+
+    if (event && curr_time > SAMPLE_INTERVAL_EVENT && curr_time % SAMPLE_INTERVAL_EVENT < SAMPLE_TIME_UNCERTAINTY)
     {
         take_measurements();
     }
-    else if (!event && millis() % SAMPLE_INTERVAL < SAMPLE_TIME_UNCERTAINTY)
+    else if (!event && curr_time > SAMPLE_INTERVAL && curr_time % SAMPLE_INTERVAL < SAMPLE_TIME_UNCERTAINTY)
     {
         take_measurements();
     }
@@ -160,10 +163,11 @@ void loop()
         event = false;
     }
 
-    if (millis() % PRESSURE_SAMPLE_INTERVAL < SAMPLE_TIME_UNCERTAINTY)
+    if (curr_time % PRESSURE_SAMPLE_INTERVAL < SAMPLE_TIME_UNCERTAINTY)
     {
         pressure = analogRead(PRESSURE_SENSOR_PIN);
         pressure_history.enqueue(pressure);
+        Serial.println("Pressure: " + String(pressure));
 
         if (pressure_history.tail3() - pressure_history.head3() > PRESSURE_CHANGE_THRESHOLD * 3 && state == SAMPLE_EMPTY)
         {
@@ -178,7 +182,7 @@ void loop()
     // UNCOMMET THE FOLLOWING CODE IF YOU WANT THE PUMP TO AUTO START IN FIVE SECONDS
     // INSTEAD OF WAITING TO BE TRIGGERED BY THE PRESSURE SENSOR
 
-    // if (millis() - start_time >= 5000 && state == SAMPLE_EMPTY)
+    // if (curr_time >= 5000 && state == SAMPLE_EMPTY)
     // {
     //     pumpStartTime = millis();
     //     pump.forward();
@@ -200,7 +204,7 @@ void loop()
         state = SYSTEM_CLEANED;
     }
 
-    if (millis() % UPLOAD_INTERVAL < SAMPLE_TIME_UNCERTAINTY && lte_active)
+    if (curr_time > UPLOAD_INTERVAL && curr_time % UPLOAD_INTERVAL < SAMPLE_TIME_UNCERTAINTY && lte_active)
     // UNCOMMENT THE FOLLOWING LINE AND COMMENT OUT THE LINE ABOVE TO LET THE TRANSMISSION START HERE
     // IN 20 SECONDS INSTEAD OF WAITING TILL THE END OF DAY. FEEL FREE TO CHANGE THE TIME
     // if (millis() - start_time >= 20000 && lte_active)
@@ -244,7 +248,9 @@ void take_measurements()
     file.print(",");
     file.print(temperature);
     file.print(",");
-    file.println(turbidity);
+    file.print(turbidity);
+    file.print(",");
+    file.println(pressure);
     file.close();
 
     // sendMessage(String(clock.getHour(h12Flag, pmFlag)) + ":" + String(clock.getMinute()) + ":" + String(clock.getSecond()) + "," + String(temperature) + "," + String(turbidity));
