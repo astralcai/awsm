@@ -81,6 +81,7 @@ enum DeviceState state = SAMPLE_EMPTY;
 long pumpStartTime = 0;
 bool lte_active = false;
 bool event = false;
+bool sampleReady = false;
 
 // initialize data
 long start_time;
@@ -183,6 +184,11 @@ void loop()
         pump.reverse();
         pumpStartTime = millis();
         state = SAMPLE_COLLECTED;
+        sampleReady = true;
+    }
+
+    if (sampleReady && lte_active) {
+        sampleReady = !sendMessage(String(DEVICE_ID) + " SampleReady!");
     }
 
     if (millis() - pumpStartTime >= PUMP_CLEAN_TIME && state == SAMPLE_COLLECTED)
