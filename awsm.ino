@@ -224,7 +224,7 @@ void loop()
     {
         file = SD.open(readFile);
         text = "" + DEVICE_ID;
-        while (!file.available())
+        while (file.available())
         {
             text += " " + file.readStringUntil('\n');
         }
@@ -347,5 +347,9 @@ bool sendMessage(String message)
                 return false;
             }
         }
+    }
+    else
+    {
+        return false;
     }
 }
