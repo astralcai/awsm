@@ -81,8 +81,6 @@ enum DeviceState
 
 enum DeviceState state = SAMPLE_EMPTY;
 long pumpStartTime = 0;
-bool uploading = false;
-bool uploadReady = false;
 bool lte_active = false;
 bool event = false;
 
@@ -97,8 +95,9 @@ float pressure;
 // initialize file
 File file;
 String text;
-String writeFile;
-String readFile;
+String filename;
+bool fileReady;
+bool messageReady;
 
 void setup()
 {
@@ -139,6 +138,8 @@ void setup()
 
     // initialize first file to write to
     writeFile = String(clock.getYear()) + "-" + String(clock.getMonth(century)) + "-" + String(clock.getDate());
+    fileReady = false;
+    messageReady = false;
 
     Serial.println("Initialization Complete");
     start_time = millis();
@@ -212,23 +213,31 @@ void loop()
         // set file to read from and increment read file
         readFile = writeFile + ".txt";
         writeFile = String(clock.getYear()) + "-" + String(clock.getMonth(century)) + "-" + String(clock.getDate());
-        uploading = true;
+        fileReady = false;
     }
 
-    if (uploading)
-    {
-        file = SD.open(readFile);
-        text = String(DEVICE_ID) + " new " + readFile;
-        while (file.available())
-        {
-            text += " " + file.readStringUntil('\n');
-        }
-        if (sendMessage(text))
-        {
-            uploading = false;
-            uploadReady = false;
-        }
+    if (!fileReady) {
+        fileReady = sendMessage(DEVICE_ID + " new " + filename);
     }
+
+    if (fileReady && messageReady) {
+        messageReady = !sendMessage(DEVICE_ID + " " + text);
+    }
+
+    // if (uploading)
+    // {
+    //     file = SD.open(readFile);
+    //     text = String(DEVICE_ID) + " new " + readFile;
+    //     while (file.available())
+    //     {
+    //         text += " " + file.readStringUntil('\n');
+    //     }
+    //     if (sendMessage(text))
+    //     {
+    //         uploading = false;
+    //         uploadReady = false;
+    //     }
+    // }
 
     // lte.poll();
 }
@@ -239,16 +248,11 @@ void take_measurements()
     turbidity = turbiditySensor.read();
 
     file = SD.open(writeFile + ".txt", FILE_WRITE);
-    file.print(String(clock.getHour(h12Flag, pmFlag)) + ":" + String(clock.getMinute()) + ":" + String(clock.getSecond()));
-    file.print(",");
-    file.print(temperature);
-    file.print(",");
-    file.print(turbidity);
-    file.print(",");
-    file.println(pressure);
+    text = String(clock.getHour(h12Flag, pmFlag)) + ":" + String(clock.getMinute()) + ":" + String(clock.getSecond()) + "," + String(temperature) + "," + String(turbidity) + "," + String(pressure);
+    file.println(text);
     file.close();
 
-    // sendMessage(String(clock.getHour(h12Flag, pmFlag)) + ":" + String(clock.getMinute()) + ":" + String(clock.getSecond()) + "," + String(temperature) + "," + String(turbidity));
+    messageReady = true;
 }
 
 bool lte_init()
