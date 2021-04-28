@@ -137,7 +137,7 @@ void setup()
     clock.setClockMode(false);
 
     // initialize first file to write to
-    writeFile = String(clock.getYear()) + "-" + String(clock.getMonth(century)) + "-" + String(clock.getDate());
+    filename = String(clock.getYear()) + "-" + String(clock.getMonth(century)) + "-" + String(clock.getDate());
     fileReady = false;
     messageReady = false;
 
@@ -210,14 +210,13 @@ void loop()
     // IN 20 SECONDS INSTEAD OF WAITING TILL THE END OF DAY. FEEL FREE TO CHANGE THE TIME
     // if (millis() - start_time >= 20000 && lte_active)
     {
-        // set file to read from and increment read file
-        readFile = writeFile + ".txt";
-        writeFile = String(clock.getYear()) + "-" + String(clock.getMonth(century)) + "-" + String(clock.getDate());
+        // increment read file
+        filename = String(clock.getYear()) + "-" + String(clock.getMonth(century)) + "-" + String(clock.getDate());
         fileReady = false;
     }
 
     if (!fileReady) {
-        fileReady = sendMessage(DEVICE_ID + " new " + filename);
+        fileReady = sendMessage(DEVICE_ID + " new " + filename + ".txt");
     }
 
     if (fileReady && messageReady) {
@@ -247,7 +246,7 @@ void take_measurements()
     temperature = tempSensor.readTempC();
     turbidity = turbiditySensor.read();
 
-    file = SD.open(writeFile + ".txt", FILE_WRITE);
+    file = SD.open(filename + ".txt", FILE_WRITE);
     text = String(clock.getHour(h12Flag, pmFlag)) + ":" + String(clock.getMinute()) + ":" + String(clock.getSecond()) + "," + String(temperature) + "," + String(turbidity) + "," + String(pressure);
     file.println(text);
     file.close();
