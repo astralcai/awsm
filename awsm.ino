@@ -216,11 +216,11 @@ void loop()
     }
 
     if (!fileReady) {
-        fileReady = sendMessage(DEVICE_ID + " new " + filename + ".txt");
+        fileReady = sendMessage(String(DEVICE_ID) + " new " + filename + ".txt");
     }
 
     if (fileReady && messageReady) {
-        messageReady = !sendMessage(DEVICE_ID + " " + text);
+        messageReady = !sendMessage(String(DEVICE_ID) + " " + text);
     }
 
     // if (uploading)
