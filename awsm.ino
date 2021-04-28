@@ -10,8 +10,12 @@
 #include "TurbiditySensor.h"
 #include <SparkFun_LTE_Shield_Arduino_Library.h>
 
-// Device ID, this needs to be unique
-#define DEVICE_ID 0
+// THINGS FOR YOU TO CHANGE
+#define DEVICE_ID 0  // device ID, this needs to be unique
+#define SAMPLE_INTERVAL 15 * 60000  // 15 minutes per measurement usually
+#define SAMPLE_INTERVAL_EVENT 60000  // 60 seconds per measurement in a stormwater event
+#define EVENT_DURATION 2 * 60 * 60000  // 2 hours after the first flush to keep taking samples at 60 second intervals
+const char SERVER_URL[] = "ec2-35-183-113-176.ca-central-1.compute.amazonaws.com";  // server public IP address
 
 // pin definitions
 #define TEMPERATURE_SENSOR_PIN 28
@@ -27,10 +31,6 @@
 #define SD_CARD_PIN 53
 
 // device runtime configurations
-#define SAMPLE_INTERVAL 5000
-#define SAMPLE_INTERVAL_EVENT 1000
-// #define SAMPLE_INTERVAL 15 * 60000
-// #define SAMPLE_INTERVAL_EVENT 30000
 #define PRESSURE_SAMPLE_INTERVAL 1000
 #define PRESSURE_LOOKBACK_TIME 10000 // AT LEAST 10 TIMES THE PRESSURE SAMPLE INTERVAL
 #define SAMPLE_TIME_UNCERTAINTY 10
@@ -38,7 +38,6 @@
 #define PUMP_SAMPLE_TIME 80000
 #define PUMP_CLEAN_TIME 40000
 #define UPLOAD_INTERVAL 24 * 60 * 60000 // milliseconds in a day
-#define EVENT_DURATION 2 * 60 * 60000
 
 // calibration settings
 #define FLOW_CALIBRATION_FACTOR 7.5
@@ -60,7 +59,6 @@ LTE_Shield lte;
 const String APN = "hologram";
 
 // define server address
-const char SERVER_URL[] = "ec2-35-183-113-176.ca-central-1.compute.amazonaws.com";
 const unsigned int SERVER_PORT = 9000;
 const unsigned int HOLOGRAM_LISTEN_PORT = 9998;
 
@@ -180,18 +178,6 @@ void loop()
         }
     }
 
-    // UNCOMMET THE FOLLOWING CODE IF YOU WANT THE PUMP TO AUTO START IN FIVE SECONDS
-    // INSTEAD OF WAITING TO BE TRIGGERED BY THE PRESSURE SENSOR
-
-    // if (curr_time >= 5000 && state == SAMPLE_EMPTY)
-    // {
-    //     pumpStartTime = millis();
-    //     pump.forward();
-    //     state = TAKING_SAMPLE;
-    //     event_timer = millis();
-    //     event = true;
-    // }
-
     if (millis() - pumpStartTime >= PUMP_SAMPLE_TIME && state == TAKING_SAMPLE)
     {
         pump.reverse();
@@ -206,37 +192,19 @@ void loop()
     }
 
     if (curr_time > UPLOAD_INTERVAL && curr_time % UPLOAD_INTERVAL < SAMPLE_TIME_UNCERTAINTY && lte_active)
-    // UNCOMMENT THE FOLLOWING LINE AND COMMENT OUT THE LINE ABOVE TO LET THE TRANSMISSION START HERE
-    // IN 20 SECONDS INSTEAD OF WAITING TILL THE END OF DAY. FEEL FREE TO CHANGE THE TIME
-    // if (millis() - start_time >= 20000 && lte_active)
     {
         // increment read file
         filename = String(clock.getYear()) + "-" + String(clock.getMonth(century)) + "-" + String(clock.getDate());
         fileReady = false;
     }
 
-    if (!fileReady) {
+    if (!fileReady && lte_active) {
         fileReady = sendMessage(String(DEVICE_ID) + " new " + filename + ".txt");
     }
 
-    if (fileReady && messageReady) {
+    if (fileReady && messageReady && lte_active) {
         messageReady = !sendMessage(String(DEVICE_ID) + " " + text);
     }
-
-    // if (uploading)
-    // {
-    //     file = SD.open(readFile);
-    //     text = String(DEVICE_ID) + " new " + readFile;
-    //     while (file.available())
-    //     {
-    //         text += " " + file.readStringUntil('\n');
-    //     }
-    //     if (sendMessage(text))
-    //     {
-    //         uploading = false;
-    //         uploadReady = false;
-    //     }
-    // }
 
     // lte.poll();
 }
