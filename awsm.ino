@@ -218,7 +218,7 @@ void loop()
     if (uploading)
     {
         file = SD.open(readFile);
-        text = String(DEVICE_ID) + " new " + readFile
+        text = String(DEVICE_ID) + " new " + readFile;
         while (file.available())
         {
             text += " " + file.readStringUntil('\n');
