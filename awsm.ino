@@ -16,6 +16,9 @@
 #define SAMPLE_INTERVAL_EVENT 60000  // 60 seconds per measurement in a stormwater event
 #define EVENT_DURATION 2 * 60 * 60000  // 2 hours after the first flush to keep taking samples at 60 second intervals
 const char SERVER_URL[] = "ec2-35-183-113-176.ca-central-1.compute.amazonaws.com";  // server public IP address
+#define PRESSURE_SAMPLE_INTERVAL 1000
+#define PRESSURE_LOOKBACK_TIME 10000 // AT LEAST 10 TIMES THE PRESSURE SAMPLE INTERVAL
+#define PRESSURE_CHANGE_THRESHOLD 5
 
 // pin definitions
 #define TEMPERATURE_SENSOR_PIN 28
@@ -31,10 +34,7 @@ const char SERVER_URL[] = "ec2-35-183-113-176.ca-central-1.compute.amazonaws.com
 #define SD_CARD_PIN 53
 
 // device runtime configurations
-#define PRESSURE_SAMPLE_INTERVAL 1000
-#define PRESSURE_LOOKBACK_TIME 10000 // AT LEAST 10 TIMES THE PRESSURE SAMPLE INTERVAL
 #define SAMPLE_TIME_UNCERTAINTY 10
-#define PRESSURE_CHANGE_THRESHOLD 5
 #define PUMP_SAMPLE_TIME 80000
 #define PUMP_CLEAN_TIME 40000
 #define UPLOAD_INTERVAL 24 * 60 * 60000 // milliseconds in a day
